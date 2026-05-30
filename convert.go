@@ -1,3 +1,5 @@
+//go:build grpc
+
 package metric
 
 import dto "github.com/kinet-labs/metric/client"
