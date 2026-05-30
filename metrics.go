@@ -3,7 +3,7 @@ package metrics
 import (
 	"context"
 	"time"
-	
+
 	"github.com/prometheus/client_golang/prometheus"
 	dto "github.com/prometheus/client_model/go"
 )
@@ -60,7 +60,7 @@ type Labels map[string]string
 // Registerer is an alias for prometheus.Registerer
 type Registerer = prometheus.Registerer
 
-// Gatherer is an alias for prometheus.Gatherer  
+// Gatherer is an alias for prometheus.Gatherer
 type Gatherer = prometheus.Gatherer
 
 // MetricFamily alias for dto.MetricFamily
@@ -85,25 +85,25 @@ type Metrics interface {
 	NewCounter(name, help string) Counter
 	// NewCounterVec creates a new counter vector
 	NewCounterVec(name, help string, labelNames []string) CounterVec
-	
+
 	// NewGauge creates a new gauge
 	NewGauge(name, help string) Gauge
 	// NewGaugeVec creates a new gauge vector
 	NewGaugeVec(name, help string, labelNames []string) GaugeVec
-	
+
 	// NewHistogram creates a new histogram
 	NewHistogram(name, help string, buckets []float64) Histogram
 	// NewHistogramVec creates a new histogram vector
 	NewHistogramVec(name, help string, labelNames []string, buckets []float64) HistogramVec
-	
+
 	// NewSummary creates a new summary
 	NewSummary(name, help string, objectives map[float64]float64) Summary
 	// NewSummaryVec creates a new summary vector
 	NewSummaryVec(name, help string, labelNames []string, objectives map[float64]float64) SummaryVec
-	
+
 	// Registry returns the underlying registry
 	Registry() Registry
-	
+
 	// PrometheusRegistry returns the prometheus registerer for compatibility
 	PrometheusRegistry() interface{}
 }
@@ -191,5 +191,3 @@ func New(namespace string) Metrics {
 func NewWithRegistry(namespace string, registry Registry) Metrics {
 	return defaultFactory.NewWithRegistry(namespace, registry)
 }
-
-
