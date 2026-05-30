@@ -73,13 +73,14 @@ type noopSummaryVec struct{}
 func (n *noopSummaryVec) With(Labels) Summary                       { return &noopSummary{} }
 func (n *noopSummaryVec) WithLabelValues(...string) Summary         { return &noopSummary{} }
 
-// noopRegistry is a registry that does nothing
-type noopRegistry struct{}
+// noopRegistry wraps a prometheus registry that does nothing
+type noopRegistry struct {
+	*prometheus.Registry
+}
 
-func (n *noopRegistry) Register(Collector) error                    { return nil }
-func (n *noopRegistry) MustRegister(Collector)                      {}
-func (n *noopRegistry) Unregister(Collector) bool                   { return true }
-func (n *noopRegistry) Gather() ([]*MetricFamily, error)            { return nil, nil }
+func newNoopRegistry() Registry {
+	return prometheus.NewRegistry()
+}
 
 // noopMetrics is a metrics implementation that does nothing
 type noopMetrics struct {
@@ -130,7 +131,7 @@ func (n *noopMetrics) PrometheusRegistry() prometheus.Registerer {
 // NewNoOpMetrics creates a no-op metrics instance for testing
 func NewNoOpMetrics(namespace string) Metrics {
 	return &noopMetrics{
-		registry: &noopRegistry{},
+		registry: newNoopRegistry(),
 	}
 }
 
