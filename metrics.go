@@ -2,12 +2,9 @@ package metrics
 
 import (
 	"context"
-	"net/http"
 	"time"
 	
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/collectors"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	dto "github.com/prometheus/client_model/go"
 )
 
@@ -192,6 +189,4 @@ func NewWithRegistry(namespace string, registry Registry) Metrics {
 	return defaultFactory.NewWithRegistry(namespace, registry)
 }
 
-// PrometheusRegistry is an alias for prometheus.Registry
-type PrometheusRegistry = prometheus.Registry
 
