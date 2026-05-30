@@ -1,4 +1,4 @@
-package metrics
+package metric
 
 import (
 	"github.com/prometheus/client_golang/prometheus"
@@ -9,55 +9,63 @@ type noopCounter struct {
 	value float64
 }
 
-func (n *noopCounter) Inc()                     { n.value++ }
-func (n *noopCounter) Add(v float64)            { n.value += v }
-func (n *noopCounter) Get() float64             { return n.value }
-func (n *noopCounter) Describe(ch chan<- *Desc) {}
-func (n *noopCounter) Collect(ch chan<- Metric) {}
+func (n *noopCounter) Inc()                              { n.value++ }
+func (n *noopCounter) Add(v float64)                     { n.value += v }
+func (n *noopCounter) Get() float64                      { return n.value }
+func (n *noopCounter) Describe(ch chan<- *prometheus.Desc) {}
+func (n *noopCounter) Collect(ch chan<- prometheus.Metric) {}
 
 // noopGauge is a gauge that does nothing
 type noopGauge struct {
 	value float64
 }
 
-func (n *noopGauge) Set(v float64)            { n.value = v }
-func (n *noopGauge) Inc()                     { n.value++ }
-func (n *noopGauge) Dec()                     { n.value-- }
-func (n *noopGauge) Add(v float64)            { n.value += v }
-func (n *noopGauge) Sub(v float64)            { n.value -= v }
-func (n *noopGauge) Get() float64             { return n.value }
-func (n *noopGauge) Describe(ch chan<- *Desc) {}
-func (n *noopGauge) Collect(ch chan<- Metric) {}
+func (n *noopGauge) Set(v float64)                     { n.value = v }
+func (n *noopGauge) Inc()                              { n.value++ }
+func (n *noopGauge) Dec()                              { n.value-- }
+func (n *noopGauge) Add(v float64)                     { n.value += v }
+func (n *noopGauge) Sub(v float64)                     { n.value -= v }
+func (n *noopGauge) Get() float64                      { return n.value }
+func (n *noopGauge) Describe(ch chan<- *prometheus.Desc) {}
+func (n *noopGauge) Collect(ch chan<- prometheus.Metric) {}
 
 // noopHistogram is a histogram that does nothing
 type noopHistogram struct{}
 
-func (n *noopHistogram) Observe(v float64)        {}
-func (n *noopHistogram) Describe(ch chan<- *Desc) {}
-func (n *noopHistogram) Collect(ch chan<- Metric) {}
+func (n *noopHistogram) Observe(v float64)              {}
+func (n *noopHistogram) Describe(ch chan<- *prometheus.Desc) {}
+func (n *noopHistogram) Collect(ch chan<- prometheus.Metric) {}
 
 // noopSummary is a summary that does nothing
 type noopSummary struct{}
 
 func (n *noopSummary) Observe(v float64) {}
+func (n *noopSummary) Describe(ch chan<- *prometheus.Desc) {}
+func (n *noopSummary) Collect(ch chan<- prometheus.Metric) {}
 
 // noopCounterVec is a counter vector that does nothing
 type noopCounterVec struct{}
 
 func (n *noopCounterVec) With(Labels) Counter               { return &noopCounter{} }
 func (n *noopCounterVec) WithLabelValues(...string) Counter { return &noopCounter{} }
+func (n *noopCounterVec) Describe(ch chan<- *prometheus.Desc)         {}
+func (n *noopCounterVec) Collect(ch chan<- prometheus.Metric)          {}
 
 // noopGaugeVec is a gauge vector that does nothing
 type noopGaugeVec struct{}
 
 func (n *noopGaugeVec) With(Labels) Gauge               { return &noopGauge{} }
 func (n *noopGaugeVec) WithLabelValues(...string) Gauge { return &noopGauge{} }
+func (n *noopGaugeVec) Describe(ch chan<- *prometheus.Desc)       {}
+func (n *noopGaugeVec) Collect(ch chan<- prometheus.Metric)        {}
 
 // noopHistogramVec is a histogram vector that does nothing
 type noopHistogramVec struct{}
 
 func (n *noopHistogramVec) With(Labels) Histogram               { return &noopHistogram{} }
 func (n *noopHistogramVec) WithLabelValues(...string) Histogram { return &noopHistogram{} }
+func (n *noopHistogramVec) Describe(ch chan<- *prometheus.Desc)       {}
+func (n *noopHistogramVec) Collect(ch chan<- prometheus.Metric)        {}
 
 // noopSummaryVec is a summary vector that does nothing
 type noopSummaryVec struct{}
@@ -131,22 +139,22 @@ func NewNoOpRegistry() Registry {
 	return newNoopRegistry()
 }
 
-// NewNoopGauge creates a new standalone gauge metric
+// NewNoopGauge creates a new standalone noop gauge metric
 func NewNoopGauge(name string) Gauge {
 	return &noopGauge{}
 }
 
-// NewNoopHistogram creates a new standalone histogram metric
+// NewNoopHistogram creates a new standalone noop histogram metric
 func NewNoopHistogram(name string) Histogram {
 	return &noopHistogram{}
 }
 
-// NewNoopCounter creates a new standalone counter metric
+// NewNoopCounter creates a new standalone noop counter metric
 func NewNoopCounter(name string) Counter {
 	return &noopCounter{}
 }
 
-// NewNoopSummary creates a new standalone summary metric
+// NewNoopSummary creates a new standalone noop summary metric
 func NewNoopSummary(name string) Summary {
 	return &noopSummary{}
 }

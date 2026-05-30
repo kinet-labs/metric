@@ -1,4 +1,4 @@
-package metrics
+package metric
 
 import (
 	"context"
@@ -10,6 +10,7 @@ import (
 
 // Counter is a metric that can only increase
 type Counter interface {
+	prometheus.Collector
 	// Inc increments the counter by 1
 	Inc()
 	// Add increments the counter by the given value
@@ -20,6 +21,7 @@ type Counter interface {
 
 // Gauge is a metric that can increase or decrease
 type Gauge interface {
+	prometheus.Collector
 	// Set sets the gauge to the given value
 	Set(float64)
 	// Inc increments the gauge by 1
@@ -36,12 +38,14 @@ type Gauge interface {
 
 // Histogram samples observations and counts them in configurable buckets
 type Histogram interface {
+	prometheus.Collector
 	// Observe adds a single observation to the histogram
 	Observe(float64)
 }
 
 // Summary captures individual observations and provides quantiles
 type Summary interface {
+	prometheus.Collector
 	// Observe adds a single observation to the summary
 	Observe(float64)
 }
@@ -110,6 +114,7 @@ type Metrics interface {
 
 // CounterVec is a vector of counters
 type CounterVec interface {
+	prometheus.Collector
 	// With returns a counter with the given label values
 	With(Labels) Counter
 	// WithLabelValues returns a counter with the given label values
@@ -118,6 +123,7 @@ type CounterVec interface {
 
 // GaugeVec is a vector of gauges
 type GaugeVec interface {
+	prometheus.Collector
 	// With returns a gauge with the given label values
 	With(Labels) Gauge
 	// WithLabelValues returns a gauge with the given label values
@@ -126,6 +132,7 @@ type GaugeVec interface {
 
 // HistogramVec is a vector of histograms
 type HistogramVec interface {
+	prometheus.Collector
 	// With returns a histogram with the given label values
 	With(Labels) Histogram
 	// WithLabelValues returns a histogram with the given label values
@@ -191,3 +198,46 @@ func New(namespace string) Metrics {
 func NewWithRegistry(namespace string, registry Registry) Metrics {
 	return defaultFactory.NewWithRegistry(namespace, registry)
 }
+
+// Export prometheus types
+type (
+	CounterOpts   = prometheus.CounterOpts
+	GaugeOpts     = prometheus.GaugeOpts  
+	HistogramOpts = prometheus.HistogramOpts
+	SummaryOpts   = prometheus.SummaryOpts
+	Gatherers     = prometheus.Gatherers
+)
+
+// Constructor functions that return wrapped types
+func NewCounter(opts CounterOpts) Counter {
+	return WrapPrometheusCounter(prometheus.NewCounter(opts))
+}
+
+func NewCounterVec(opts CounterOpts, labelNames []string) CounterVec {
+	return WrapPrometheusCounterVec(prometheus.NewCounterVec(opts, labelNames))
+}
+
+func NewGauge(opts GaugeOpts) Gauge {
+	return WrapPrometheusGauge(prometheus.NewGauge(opts))
+}
+
+func NewGaugeVec(opts GaugeOpts, labelNames []string) GaugeVec {
+	return WrapPrometheusGaugeVec(prometheus.NewGaugeVec(opts, labelNames))
+}
+
+func NewHistogramVec(opts HistogramOpts, labelNames []string) HistogramVec {
+	return WrapPrometheusHistogramVec(prometheus.NewHistogramVec(opts, labelNames))
+}
+
+// Keep these as direct aliases since they don't need wrapping
+var (
+	NewHistogram       = prometheus.NewHistogram
+	NewSummary         = prometheus.NewSummary
+	NewSummaryVec      = prometheus.NewSummaryVec
+	NewRegistry        = prometheus.NewRegistry
+	NewDesc            = prometheus.NewDesc
+	MustNewConstMetric = prometheus.MustNewConstMetric
+	Register           = prometheus.Register
+	MustRegister       = prometheus.MustRegister
+	Unregister         = prometheus.Unregister
+)

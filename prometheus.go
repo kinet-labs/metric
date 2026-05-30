@@ -1,4 +1,4 @@
-package metrics
+package metric
 
 import (
 	"github.com/prometheus/client_golang/prometheus"
@@ -13,6 +13,10 @@ func (p *prometheusCounter) Inc()          { p.counter.Inc() }
 func (p *prometheusCounter) Add(v float64) { p.counter.Add(v) }
 func (p *prometheusCounter) Get() float64  { return 0 } // Prometheus doesn't expose current value
 
+// Implement prometheus.Collector interface
+func (p *prometheusCounter) Describe(ch chan<- *prometheus.Desc) { p.counter.Describe(ch) }
+func (p *prometheusCounter) Collect(ch chan<- prometheus.Metric)  { p.counter.Collect(ch) }
+
 // prometheusGauge wraps prometheus.Gauge
 type prometheusGauge struct {
 	gauge prometheus.Gauge
@@ -25,6 +29,10 @@ func (p *prometheusGauge) Add(v float64) { p.gauge.Add(v) }
 func (p *prometheusGauge) Sub(v float64) { p.gauge.Sub(v) }
 func (p *prometheusGauge) Get() float64  { return 0 } // Prometheus doesn't expose current value
 
+// Implement prometheus.Collector interface
+func (p *prometheusGauge) Describe(ch chan<- *prometheus.Desc) { p.gauge.Describe(ch) }
+func (p *prometheusGauge) Collect(ch chan<- prometheus.Metric)  { p.gauge.Collect(ch) }
+
 // prometheusHistogram wraps prometheus.Histogram
 type prometheusHistogram struct {
 	histogram prometheus.Histogram
@@ -32,12 +40,20 @@ type prometheusHistogram struct {
 
 func (p *prometheusHistogram) Observe(v float64) { p.histogram.Observe(v) }
 
+// Implement prometheus.Collector interface
+func (p *prometheusHistogram) Describe(ch chan<- *prometheus.Desc) { p.histogram.Describe(ch) }
+func (p *prometheusHistogram) Collect(ch chan<- prometheus.Metric)  { p.histogram.Collect(ch) }
+
 // prometheusSummary wraps prometheus.Summary
 type prometheusSummary struct {
 	summary prometheus.Summary
 }
 
 func (p *prometheusSummary) Observe(v float64) { p.summary.Observe(v) }
+
+// Implement prometheus.Collector interface
+func (p *prometheusSummary) Describe(ch chan<- *prometheus.Desc) { p.summary.Describe(ch) }
+func (p *prometheusSummary) Collect(ch chan<- prometheus.Metric)  { p.summary.Collect(ch) }
 
 // prometheusCounterVec wraps prometheus.CounterVec
 type prometheusCounterVec struct {
@@ -52,6 +68,10 @@ func (p *prometheusCounterVec) WithLabelValues(labelValues ...string) Counter {
 	return &prometheusCounter{counter: p.vec.WithLabelValues(labelValues...)}
 }
 
+// Implement prometheus.Collector interface
+func (p *prometheusCounterVec) Describe(ch chan<- *prometheus.Desc) { p.vec.Describe(ch) }
+func (p *prometheusCounterVec) Collect(ch chan<- prometheus.Metric)  { p.vec.Collect(ch) }
+
 // prometheusGaugeVec wraps prometheus.GaugeVec
 type prometheusGaugeVec struct {
 	vec *prometheus.GaugeVec
@@ -65,6 +85,10 @@ func (p *prometheusGaugeVec) WithLabelValues(labelValues ...string) Gauge {
 	return &prometheusGauge{gauge: p.vec.WithLabelValues(labelValues...)}
 }
 
+// Implement prometheus.Collector interface
+func (p *prometheusGaugeVec) Describe(ch chan<- *prometheus.Desc) { p.vec.Describe(ch) }
+func (p *prometheusGaugeVec) Collect(ch chan<- prometheus.Metric)  { p.vec.Collect(ch) }
+
 // prometheusHistogramVec wraps prometheus.HistogramVec
 type prometheusHistogramVec struct {
 	vec *prometheus.HistogramVec
@@ -77,6 +101,10 @@ func (p *prometheusHistogramVec) With(labels Labels) Histogram {
 func (p *prometheusHistogramVec) WithLabelValues(labelValues ...string) Histogram {
 	return &prometheusHistogram{histogram: p.vec.WithLabelValues(labelValues...).(prometheus.Histogram)}
 }
+
+// Implement prometheus.Collector interface
+func (p *prometheusHistogramVec) Describe(ch chan<- *prometheus.Desc) { p.vec.Describe(ch) }
+func (p *prometheusHistogramVec) Collect(ch chan<- prometheus.Metric)  { p.vec.Collect(ch) }
 
 // prometheusSummaryVec wraps prometheus.SummaryVec
 type prometheusSummaryVec struct {
