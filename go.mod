@@ -1,4 +1,4 @@
-module github.com/kinet-labs/metrics
+module github.com/kinet-labs/metric
 
 go 1.25
 
