@@ -3,6 +3,8 @@ package metrics
 import (
 	"context"
 	"time"
+	
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 // Counter is a metric that can only increase
@@ -171,6 +173,9 @@ type Metrics interface {
 	
 	// Registry returns the underlying registry
 	Registry() Registry
+	
+	// PrometheusRegistry returns a prometheus-compatible registerer
+	PrometheusRegistry() prometheus.Registerer
 }
 
 // CounterVec is a vector of counters

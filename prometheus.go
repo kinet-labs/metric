@@ -237,6 +237,10 @@ func (p *prometheusMetrics) Registry() Registry {
 	return &prometheusRegistry{registry: p.registry}
 }
 
+func (p *prometheusMetrics) PrometheusRegistry() prometheus.Registerer {
+	return p.registry
+}
+
 // prometheusFactory creates prometheus-backed metrics
 type prometheusFactory struct {
 	defaultRegistry *prometheus.Registry
