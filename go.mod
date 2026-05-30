@@ -1,8 +1,6 @@
-module github.com/kinet-labs/metric
+module github.com/kinet-labs/metrics
 
-go 1.23.0
-
-toolchain go1.24.6
+go 1.25
 
 require (
 	github.com/prometheus/client_golang v1.23.0
