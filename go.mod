@@ -1,6 +1,6 @@
 module github.com/kinet-labs/metric
 
-go 1.25.5
+go 1.26.3
 
 require (
 	github.com/gorilla/rpc v1.2.1
