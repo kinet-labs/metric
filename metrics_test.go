@@ -66,9 +66,9 @@ func TestNoOpFactory(t *testing.T) {
 	metrics2.NewGauge("gauge", "help")
 }
 
-func TestPrometheusMetrics(t *testing.T) {
-	// Note: This is a basic test. In production, you'd want more comprehensive tests
-	factory := NewPrometheusFactory()
+func TestMetrics(t *testing.T) {
+	// Test the metrics implementation.
+	factory := NewFactory()
 	metrics := factory.New("test")
 
 	// Test counter
@@ -114,7 +114,7 @@ func TestGlobalFactory(t *testing.T) {
 	counter.Inc() // Should not panic
 
 	// Test setting a new factory
-	SetFactory(NewPrometheusFactory())
+	SetFactory(NewFactory())
 	metrics2 := New("test2")
 	gauge := metrics2.NewGauge("gauge", "help")
 	gauge.Set(42) // Should not panic
