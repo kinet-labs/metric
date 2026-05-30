@@ -1,4 +1,4 @@
-package metric
+package metrics
 
 import (
 	"context"
@@ -188,7 +188,6 @@ func (r *ContextRegistry) GatherWithContext(ctx context.Context) ([]*dto.MetricF
 
 			// Forward metrics from collector channel to main channel
 			go func() {
-				defer close(done)
 				for metric := range collectorCh {
 					select {
 					case metricCh <- metric:
@@ -196,6 +195,7 @@ func (r *ContextRegistry) GatherWithContext(ctx context.Context) ([]*dto.MetricF
 						return
 					}
 				}
+				close(done)
 			}()
 
 			// Call the appropriate collect method
@@ -204,26 +204,7 @@ func (r *ContextRegistry) GatherWithContext(ctx context.Context) ([]*dto.MetricF
 					cwc.CollectWithContext(ctx, collectorCh)
 				}
 			} else {
-				// For non-context collectors, we need to run them in a way that can be interrupted
-				collectorDone := make(chan struct{})
-				go func() {
-					defer close(collectorDone)
-					defer func() {
-						if r := recover(); r != nil {
-							errCh <- fmt.Errorf("collector panicked: %v", r)
-						}
-					}()
-					e.collector.Collect(collectorCh)
-				}()
-
-				// Wait for either collector to finish or context to be done
-				select {
-				case <-collectorDone:
-					// Collector finished normally
-				case <-ctx.Done():
-					// Context cancelled, but we can't stop the collector
-					// Just continue and let it finish in the background
-				}
+				e.collector.Collect(collectorCh)
 			}
 
 			close(collectorCh)
@@ -232,72 +213,64 @@ func (r *ContextRegistry) GatherWithContext(ctx context.Context) ([]*dto.MetricF
 	}
 
 	// Wait for all collectors to finish and close the metric channel
-	doneCh := make(chan struct{})
 	go func() {
 		wg.Wait()
 		close(metricCh)
 		close(errCh)
-		close(doneCh)
 	}()
 
 	// Collect metrics into families
 	metricFamilies := make(map[string]*dto.MetricFamily)
 
-loop:
-	for {
+	for metric := range metricCh {
+		// Check context periodically
 		select {
-		case metric, ok := <-metricCh:
-			if !ok {
-				break loop
-			}
-
-			// Convert metric to DTO
-			dtoMetric := &dto.Metric{}
-			if err := metric.Write(dtoMetric); err != nil {
-				return nil, fmt.Errorf("error writing metric: %w", err)
-			}
-
-			// Get metric descriptor
-			desc := metric.Desc()
-
-			// Extract the fully qualified name from the descriptor
-			// We need to parse the descriptor string to get the actual metric name
-			// The descriptor string format is: Desc{fqName: "name", help: "...", ...}
-			descString := desc.String()
-			var fqName string
-
-			// Parse the fqName from the descriptor string
-			if idx := strings.Index(descString, `fqName: "`); idx >= 0 {
-				start := idx + len(`fqName: "`)
-				if end := strings.Index(descString[start:], `"`); end >= 0 {
-					fqName = descString[start : start+end]
-				}
-			}
-
-			// If we couldn't parse it, use the whole string as fallback
-			if fqName == "" {
-				fqName = descString
-			}
-
-			// Get or create metric family
-			mf, exists := metricFamilies[fqName]
-			if !exists {
-				mf = &dto.MetricFamily{
-					Name: proto.String(fqName),
-					Help: proto.String(""),              // Would be extracted from descriptor
-					Type: dto.MetricType_UNTYPED.Enum(), // Would be determined from metric type
-				}
-				metricFamilies[fqName] = mf
-			}
-
-			// Add metric to family
-			mf.Metric = append(mf.Metric, dtoMetric)
-
 		case <-ctx.Done():
 			return nil, ctx.Err()
-		case <-doneCh:
-			break loop
+		default:
 		}
+
+		// Convert metric to DTO
+		dtoMetric := &dto.Metric{}
+		if err := metric.Write(dtoMetric); err != nil {
+			return nil, fmt.Errorf("error writing metric: %w", err)
+		}
+
+		// Get metric descriptor
+		desc := metric.Desc()
+
+		// Extract the fully qualified name from the descriptor
+		// We need to parse the descriptor string to get the actual metric name
+		// The descriptor string format is: Desc{fqName: "name", help: "...", ...}
+		descString := desc.String()
+		var fqName string
+
+		// Parse the fqName from the descriptor string
+		if idx := strings.Index(descString, `fqName: "`); idx >= 0 {
+			start := idx + len(`fqName: "`)
+			if end := strings.Index(descString[start:], `"`); end >= 0 {
+				fqName = descString[start : start+end]
+			}
+		}
+
+		// If we couldn't parse it, use the whole string as fallback
+		if fqName == "" {
+			fqName = descString
+		}
+
+		// Get or create metric family
+		mf, exists := metricFamilies[fqName]
+		if !exists {
+			mf = &dto.MetricFamily{
+				Name: proto.String(fqName),
+				Help: proto.String(""),              // Would be extracted from descriptor
+				Type: dto.MetricType_UNTYPED.Enum(), // Would be determined from metric type
+			}
+			metricFamilies[fqName] = mf
+		}
+
+		// Add metric to family
+		mf.Metric = append(mf.Metric, dtoMetric)
 	}
 
 	// Check for collector errors

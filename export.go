@@ -1,4 +1,4 @@
-package metric
+package metrics
 
 import (
 	"net/http"
@@ -11,8 +11,22 @@ import (
 
 // Export prometheus types that are needed by the node
 
-// NewRegistry creates a new registry (internal implementation uses Prometheus)
-// This is already exported via the var declaration in metric.go
+// CounterOpts is an alias for prometheus.CounterOpts
+type CounterOpts = prometheus.CounterOpts
+
+// GaugeOpts is an alias for prometheus.GaugeOpts
+type GaugeOpts = prometheus.GaugeOpts
+
+// HistogramOpts is an alias for prometheus.HistogramOpts
+type HistogramOpts = prometheus.HistogramOpts
+
+// SummaryOpts is an alias for prometheus.SummaryOpts
+type SummaryOpts = prometheus.SummaryOpts
+
+// NewPrometheusRegistry creates a new prometheus registry
+func NewPrometheusRegistry() Registry {
+	return prometheus.NewRegistry()
+}
 
 // ProcessCollectorOpts are options for the process collector
 type ProcessCollectorOpts = collectors.ProcessCollectorOpts
@@ -42,3 +56,24 @@ type MetricFamilies = []*dto.MetricFamily
 func WrapPrometheusRegistry(promReg *prometheus.Registry) Registry {
 	return promReg
 }
+
+// NewCounter creates a counter with options (for compatibility)
+func NewCounter(opts CounterOpts) Counter {
+	return &prometheusCounter{counter: prometheus.NewCounter(opts)}
+}
+
+// NewCounterVec creates a counter vector with options
+func NewCounterVec(opts CounterOpts, labelNames []string) CounterVec {
+	return &prometheusCounterVec{vec: prometheus.NewCounterVec(opts, labelNames)}
+}
+
+// NewGauge creates a gauge with options (for compatibility)
+func NewGauge(opts GaugeOpts) Gauge {
+	return &prometheusGauge{gauge: prometheus.NewGauge(opts)}
+}
+
+// NewGaugeVec creates a gauge vector with options
+func NewGaugeVec(opts GaugeOpts, labelNames []string) GaugeVec {
+	return &prometheusGaugeVec{vec: prometheus.NewGaugeVec(opts, labelNames)}
+}
+
